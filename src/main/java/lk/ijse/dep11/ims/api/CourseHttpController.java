@@ -79,7 +79,20 @@ public class CourseHttpController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     public void deleteCourse(@PathVariable int id){
-        System.out.println("deleteCourse()");
+        try (Connection connection = pool.getConnection()){
+            PreparedStatement stmExist = connection.prepareStatement("SELECT * FROM course WHERE id = ?");
+            stmExist.setInt(1, id);
+            if(!stmExist.executeQuery().next()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course Not Found");
+            }
+
+            PreparedStatement stm = connection.prepareStatement("DELETE FROM course WHERE id = ?");
+            stm.setInt(1, id);
+            stm.executeUpdate();
+
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping(value = "/{id}", produces = "application/json")
