@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PreDestroy;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin
@@ -93,7 +94,7 @@ public class TeacherHttpController {
         }
     }
 
-    @GetMapping(value = "/{id}")
+    @GetMapping(value = "/{id}", produces = "application/json")
     public TeacherTO getTeacher(@PathVariable int id) {
         try (Connection connection = pool.getConnection()) {
             PreparedStatement stmExist = connection
@@ -112,10 +113,22 @@ public class TeacherHttpController {
         }
     }
 
-    @GetMapping
+    @GetMapping(produces = "application/json")
     public List<TeacherTO> getAllTeachers() {
-        System.out.println("Get All Teachers");
-        return null;
+        try (Connection connection = pool.getConnection()) {
+            Statement stm = connection.createStatement();
+            ResultSet rst = stm.executeQuery("SELECT * FROM teacher");
+            List<TeacherTO> teachersList = new ArrayList<>();
+            while (rst.next()) {
+                int id = rst.getInt("id");
+                String name = rst.getString("name");
+                String contact = rst.getString("contact");
+                teachersList.add(new TeacherTO(id, name, contact));
+            }
+            return teachersList;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
