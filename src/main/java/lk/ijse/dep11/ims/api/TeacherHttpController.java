@@ -6,6 +6,7 @@ import lk.ijse.dep11.ims.to.TeacherTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PreDestroy;
 import java.sql.*;
@@ -54,8 +55,24 @@ public class TeacherHttpController {
     @PatchMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
     public TeacherTO updateTeacher(@PathVariable int id,
                               @RequestBody @Validated TeacherTO teacher) {
-        System.out.println("Update Teacher");
-        return null;
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stmExist = connection
+                    .prepareStatement("SELECT * FROM teacher WHERE id = ?");
+            stmExist.setInt(1, id);
+            ResultSet rst = stmExist.executeQuery();
+            if (!rst.next()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher Id not found");
+            }
+            PreparedStatement stm = connection
+                    .prepareStatement("UPDATE teacher SET name = ?, contact = ? WHERE id = ?");
+            stm.setString(1, teacher.getName());
+            stm.setString(2, teacher.getContact());
+            stm.setInt(3, id);
+            stm.executeUpdate();
+            return teacher;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
