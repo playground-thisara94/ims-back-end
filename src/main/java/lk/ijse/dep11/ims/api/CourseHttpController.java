@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.PreDestroy;
 import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 
 @RestController
@@ -115,8 +116,21 @@ public class CourseHttpController {
 
     @GetMapping(produces = "application/json")
     public List<CourseTO> getAllCourses(){
-        System.out.println("getAllCourses()");
-        return null;
+        try (Connection connection = pool.getConnection()){
+            Statement stm = connection.createStatement();
+            ResultSet rst = stm.executeQuery("SELECT * FROM course ORDER BY id");
+            List<CourseTO> courseList = new LinkedList<>();
+            while (rst.next()){
+                int id = rst.getInt("id");
+                String name = rst.getString("name");
+                int duration = rst.getInt("duration_in_months");
+                courseList.add(new CourseTO(id, name, duration));
+            }
+            return courseList;
+
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
