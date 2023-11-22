@@ -61,7 +61,7 @@ public class TeacherHttpController {
             stmExist.setInt(1, id);
             ResultSet rst = stmExist.executeQuery();
             if (!rst.next()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher Id not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found");
             }
             PreparedStatement stm = connection
                     .prepareStatement("UPDATE teacher SET name = ?, contact = ? WHERE id = ?");
@@ -77,7 +77,20 @@ public class TeacherHttpController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     public void deleteTeacher(@PathVariable int id) {
-        System.out.println("Delete Teacher");
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stmExist = connection
+                    .prepareStatement("SELECT * FROM teacher WHERE id = ?");
+            stmExist.setInt(1, id);
+            if (!stmExist.executeQuery().next()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found");
+            }
+            PreparedStatement stm = connection
+                    .prepareStatement("DELETE FROM teacher WHERE id = ?");
+            stm.setInt(1, id);
+            stm.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping(value = "/{id}")
