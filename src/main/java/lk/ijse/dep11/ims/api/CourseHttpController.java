@@ -97,8 +97,20 @@ public class CourseHttpController {
 
     @GetMapping(value = "/{id}", produces = "application/json")
     public CourseTO getCourseDetails(@PathVariable int id){
-        System.out.println("getCourseDetails()");
-        return null;
+        try (Connection connection = pool.getConnection()){
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM course WHERE id = ?");
+            stm.setInt(1, id);
+            ResultSet rst = stm.executeQuery();
+            if(!rst.next()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course Not Found");
+            }
+            String name = rst.getString("name");
+            int duration = rst.getInt("duration_in_months");
+            return new CourseTO(id, name, duration);
+
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping(produces = "application/json")
