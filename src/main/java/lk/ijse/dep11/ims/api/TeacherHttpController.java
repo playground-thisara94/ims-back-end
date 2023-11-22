@@ -95,8 +95,21 @@ public class TeacherHttpController {
 
     @GetMapping(value = "/{id}")
     public TeacherTO getTeacher(@PathVariable int id) {
-        System.out.println("Get Teacher");
-        return null;
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stmExist = connection
+                    .prepareStatement("SELECT * FROM teacher WHERE id = ?");
+            stmExist.setInt(1, id);
+            ResultSet rst = stmExist.executeQuery();
+            if (!rst.next()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found");
+            }
+            int teacherId = rst.getInt("id");
+            String name = rst.getString("name");
+            String contact = rst.getString("contact");
+            return new TeacherTO(teacherId, name, contact);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GetMapping
