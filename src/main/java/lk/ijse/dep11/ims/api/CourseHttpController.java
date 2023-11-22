@@ -54,11 +54,26 @@ public class CourseHttpController {
         }
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
-    @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PatchMapping(value = "/{id}", consumes = "application/json")
     public void updateCourse(@PathVariable int id,
                              @RequestBody @Validated CourseTO course){
+        try (Connection connection = pool.getConnection()){
+            PreparedStatement stmExist = connection.prepareStatement("SELECT * FROM course WHERE id = ?");
+            stmExist.setInt(1, id);
+            if(!stmExist.executeQuery().next()){
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Course Not Found");
+            }
 
+            PreparedStatement stm = connection.prepareStatement("UPDATE course SET name = ?, duration_in_months = ? WHERE id = ?");
+            stm.setString(1, course.getName());
+            stm.setInt(2, course.getDurationInMonths());
+            stm.setInt(3, id);
+            stm.executeUpdate();
+
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
