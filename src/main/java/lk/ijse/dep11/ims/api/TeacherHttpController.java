@@ -53,7 +53,7 @@ public class TeacherHttpController {
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PatchMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
-    public TeacherTO updateTeacher(@PathVariable int id,
+    public void updateTeacher(@PathVariable int id,
                               @RequestBody @Validated TeacherTO teacher) {
         try (Connection connection = pool.getConnection()) {
             PreparedStatement stmExist = connection
@@ -69,7 +69,6 @@ public class TeacherHttpController {
             stm.setString(2, teacher.getContact());
             stm.setInt(3, id);
             stm.executeUpdate();
-            return teacher;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
